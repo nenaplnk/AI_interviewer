@@ -1,0 +1,9 @@
+# 0. Установка и распаковка zip file
+
+# 1. Установка зависимостей
+pip install fastapi uvicorn openai
+
+# 2. Инициализация БД и запуск
+python backend.py с вашим API KEY и API BASE URL
+
+# 3. Открыть frontend.html в браузере
