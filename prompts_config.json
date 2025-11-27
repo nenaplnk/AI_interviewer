@@ -1,0 +1,358 @@
+{
+  "agents": {
+    "hr_manager": {
+      "name": "Наталья",
+      "title": "HR Manager",
+      "personality": "Дружелюбная, оценивает soft skills, коммуникацию, мотивацию",
+      "focus_areas": ["коммуникация", "мотивация", "культурный fit", "стрессоустойчивость"]
+    },
+    "tech_lead": {
+      "name": "Иван",
+      "title": "Tech Lead",
+      "personality": "Аналитичный, оценивает архитектурное мышление, код-ревью навыки",
+      "focus_areas": ["архитектура", "код-ревью", "технические решения", "менторинг"]
+    },
+    "senior_dev": {
+      "name": "Максим",
+      "title": "Senior Developer",
+      "personality": "Практичный, оценивает качество кода, алгоритмы, best practices. НИКОГДА не обращается к кандидату по имени.",
+      "focus_areas": ["качество кода", "алгоритмы", "оптимизация", "тестирование"]
+    }
+  },
+  "penalty_types": {
+    "wrong_answer": 5,
+    "timeout": 10,
+    "hint_used": 3,
+    "multiple_attempts": 2,
+    "poor_communication": 4,
+    "incomplete_answer": 3,
+    "no_explanation": 4,
+    "copy_paste_detected": 15,
+    "context_switching": 5,
+    "poor_code_readability": 5,
+    "conflict_behavior": 7.5,
+    "fast_typing_detected": 10,
+    "paste_detected": 12
+  },
+  "penalty_weights": {
+    "junior": {
+      "wrong_answer": 3,
+      "timeout": 5,
+      "hint_used": 2,
+      "multiple_attempts": 1,
+      "poor_communication": 2.25,
+      "incomplete_answer": 2,
+      "no_explanation": 3,
+      "copy_paste_detected": 10,
+      "slow_feedback_response": 5,
+      "context_switching": 1,
+      "poor_code_readability": 2,
+      "conflict_behavior": 3.75,
+      "fast_typing_detected": 8,
+      "paste_detected": 10
+    },
+    "middle": {
+      "wrong_answer": 5,
+      "timeout": 8,
+      "hint_used": 3,
+      "multiple_attempts": 2,
+      "poor_communication": 3.75,
+      "incomplete_answer": 3,
+      "no_explanation": 4,
+      "copy_paste_detected": 15,
+      "slow_feedback_response": 8,
+      "context_switching": 2,
+      "poor_code_readability": 3,
+      "conflict_behavior": 6,
+      "fast_typing_detected": 10,
+      "paste_detected": 12
+    },
+    "senior": {
+      "wrong_answer": 7,
+      "timeout": 10,
+      "hint_used": 4,
+      "multiple_attempts": 3,
+      "poor_communication": 6,
+      "incomplete_answer": 5,
+      "no_explanation": 6,
+      "copy_paste_detected": 20,
+      "slow_feedback_response": 10,
+      "context_switching": 3,
+      "poor_code_readability": 5,
+      "conflict_behavior": 9,
+      "fast_typing_detected": 15,
+      "paste_detected": 18
+    }
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_next_task",
+        "description": "Получить следующую задачу для кандидата. Вызывается когда нужна новая задача на код.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "difficulty_adjustment": {
+              "type": "string",
+              "enum": ["easier", "same", "harder"],
+              "description": "Изменение сложности относительно текущей"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Причина выбора сложности"
+            }
+          },
+          "required": ["difficulty_adjustment"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_theory_question",
+        "description": "Получить теоретический вопрос для кандидата",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "enum": ["python_basics", "python_advanced", "algorithms", "databases", "system_design", "architecture"],
+              "description": "Категория вопроса"
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "evaluate_theory_answer",
+        "description": "Оценить ответ кандидата на теоретический вопрос",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number",
+              "description": "Оценка от 0 до 10"
+            },
+            "covered_topics": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Какие темы кандидат раскрыл"
+            },
+            "missing_topics": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Какие темы кандидат упустил"
+            },
+            "feedback": {
+              "type": "string",
+              "description": "Краткий фидбек"
+            }
+          },
+          "required": ["score", "feedback"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "add_penalty",
+        "description": "Добавить штраф кандидату",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["wrong_answer", "timeout", "hint_used", "multiple_attempts", "poor_communication", "incomplete_answer", "no_explanation", "copy_paste_detected", "context_switching", "poor_code_readability", "conflict_behavior", "fast_typing_detected", "paste_detected"],
+              "description": "Тип штрафа"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Причина штрафа"
+            }
+          },
+          "required": ["type", "reason"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "add_agent_note",
+        "description": "Добавить заметку от текущего агента о кандидате",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "note": {
+              "type": "string",
+              "description": "Заметка о кандидате"
+            },
+            "sentiment": {
+              "type": "string",
+              "enum": ["positive", "neutral", "negative"],
+              "description": "Тональность заметки"
+            }
+          },
+          "required": ["note"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "switch_agent",
+        "description": "Переключиться на другого агента-интервьюера",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "agent": {
+              "type": "string",
+              "enum": ["hr_manager", "tech_lead", "senior_dev"],
+              "description": "Роль агента"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Причина переключения"
+            }
+          },
+          "required": ["agent"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "change_phase",
+        "description": "Перейти к следующей фазе интервью",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phase": {
+              "type": "string",
+              "enum": ["intro", "theory", "coding", "review", "final"],
+              "description": "Фаза интервью"
+            }
+          },
+          "required": ["phase"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "finish_interview",
+        "description": "Завершить интервью и провести совещание агентов",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "preliminary_decision": {
+              "type": "string",
+              "enum": ["strong_hire", "hire", "maybe", "no_hire"],
+              "description": "Предварительное решение текущего агента"
+            }
+          },
+          "required": ["preliminary_decision"]
+        }
+      }
+    }
+  ],
+  "prompts": {
+    "system": {
+      "agent_system": "Ты — {agent_name}, {agent_title} в IT-компании.\nХарактер: {agent_personality}\nФокус оценки: {agent_focus_areas}\nТекущая фаза интервью: {phase}\nУровень кандидата: {level}\n\nСТРОГИЕ ПРАВИЛА:\n1. ГОВОРИ ТОЛЬКО ОТ ЛИЦА {agent_name}. НИКОГДА не озвучивай свои внутренние рассуждения.\n2. НИ ПРИ КАКИХ УСЛОВИЯХ не используй теги <think>, <thinking>, <internal>, <reasoning>, <!-- --> или любые другие мета-теги.\n3. Не пиши комментарии о своем мышлении или процессе принятия решений.\n4. Твой ответ ДОЛЖЕН быть прямым сообщением кандидату без каких-либо преамбул.\n5. МАКСИМАЛЬНАЯ длина ответа — 3 предложения.\n6. Если ты хочешь использовать инструмент, вызови его через function calling, а НЕ пиши об этом в ответе.\n7. НИКОГДА не обращайся к кандидату по имени. Используй только 'вы' или безличные конструкции.\n\nПРИМЕР ПРАВИЛЬНОГО ответа:\n\"Привет! Я Наталья, HR-менеджер. Расскажите немного о своем опыте работы с Python.\"\n\nПРИМЕР ЗАПРЕЩЕННОГО поведения (НИКОГДА так не делай):\n\"<thinking>Мне нужно узнать опыт кандидата</thinking> Привет!\"\n\"<!-- я думаю, стоит спросить об опыте --> Привет!\"\n\"Максим, расскажите о себе\" - НЕ называй кандидата по имени!\n\nНАПОМИНАНИЕ: Ты — профессионал, ведущий собеседование. Все твои мысли остаются при тебе. В чате только прямая речь с кандидатом. НЕ ИСПОЛЬЗУЙ ИМЕНА КАНДИДАТОВ."
+    },
+    "initial": {
+      "greeting": "Поприветствуй кандидата уровня {level}. Представься и начни интервью. НЕ называй кандидата по имени.",
+      "agent_greeting_system": "Ты {agent_name}, {agent_title}. Говори только прямой речью с кандидатом. НИКАКИХ мыслей, рассуждений или мета-комментариев. МАКСИМУМ 2 предложения. НАЧИНАЙ СРАЗУ с приветствия. НЕ НАЗЫВАЙ КАНДИДАТА ПО ИМЕНИ."
+    },
+    "chat": {
+      "context": "Фаза: {phase}\nУровень кандидата: {level}\nВыполнено задач: {coding_completed}/{coding_total}\nОтвечено вопросов: {theory_completed}/{theory_total}\nТекущий контекст: {current_context}\n\nВАЖНО: Не называй кандидата по имени. Используй 'вы'.",
+      "context_with_feedback": "Фаза: {phase}\nУровень кандидата: {level}\nВыполнено задач: {coding_completed}/{coding_total}\nОтвечено вопросов: {theory_completed}/{theory_total}\nТекущий контекст: {current_context}\n\nИНСТРУКЦИЯ: Кандидат задал уточняющий вопрос. Ответь подробно: {suggested_response}\n\nВАЖНО: Не называй кандидата по имени.",
+      "context_with_conflict": "Фаза: {phase}\nУровень кандидата: {level}\nВыполнено задач: {coding_completed}/{coding_total}\nОтвечено вопросов: {theory_completed}/{theory_total}\nТекущий контекст: {current_context}\n\nВНИМАНИЕ: Кандидат проявил деструктивное поведение. Профессионально напомни о стандартах общения.\n\nВАЖНО: Не называй кандидата по имени."
+    },
+    "coding": {
+      "feedback_success": "Кандидат решил задачу '{task_title}' правильно с {attempts_count} попытки. Похвали кратко. НЕ называй кандидата по имени.",
+      "feedback_partial": "Кандидат решил задачу '{task_title}' на {passed}/{total} тестов. Дай краткий фидбек без решения. НЕ называй кандидата по имени.",
+      "agent_feedback_system": "Ты {agent_name}, {agent_title}. Максимум 2 предложения. НЕ НАЗЫВАЙ КАНДИДАТА ПО ИМЕНИ."
+    },
+    "theory": {
+      "evaluation": "Вопрос: {question}\nОтвет кандидата: {answer}\nОжидаемые темы: {expected_topics}\nГлубина ответа (ADR): {adr_score:.2f} (оценена ИИ как {adr_quality})\nОцени ответ по шкале 0-10 с учетом глубины технических деталей и дай краткий фидбек (1-2 предложения).\nФормат: ОЦЕНКА: [число] | ФИДБЕК: [текст]",
+      "evaluator_system": "Ты технический интервьюер. Оценивай объективно и кратко.",
+      "adr_analysis": "Вопрос: {question}\nОжидаемые темы для раскрытия: {expected_topics}\nОтвет кандидата: {answer}\nПроанализируй ответ по следующим критериям:\n1. Глубина технических деталей (а не общие слова)\n2. Конкретные примеры и объяснения\n3. Использование точной технической терминологии\n4. Полнота раскрытия ожидаемых тем\n5. Отсутствие \"воды\" (общих фраз без содержания)\nДай оценку по шкале 0-10, где:\n- 0-3: Поверхностный ответ, много \"воды\", мало деталей\n- 4-6: Умеренная глубина, есть детали но недостаточно\n- 7-10: Глубокий ответ с конкретными техническими деталями\nТакже укажи:\n- Основные проблемы в ответе (если есть)\n- Что можно улучшить\nФормат ответа (строго в JSON):\n{{\n    \"score\": число от 0 до 10,\n    \"issues\": [\"проблема 1\", \"проблема 2\", ...],\n    \"improvement_suggestions\": [\"совет 1\", \"совет 2\", ...],\n    \"feedback\": \"краткий фидбек 1 предложение\"\n}}",
+      "adr_system": "Ты эксперт-интервьюер по техническим вопросам. Твоя задача - объективно оценить глубину ответа кандидата.\nНе будь слишком строгим, но честно оценивай качество ответа. Возвращай ответ строго в формате JSON."
+    },
+    "learning_agility": {
+      "analysis": "Предыдущий ответ кандидата: {previous_answer}\nФидбек от интервьюера: {feedback}\nНовый ответ кандидата: {new_answer}\nПроанализируй, насколько кандидат учился на фидбеке по следующим критериям:\n1. Улучшение точности технической терминологии\n2. Более глубокое раскрытие тем, указанных в фидбеке\n3. Исправление ошибок, на которые указывал интервьюер\n4. Более структурированный и логичный ответ\n5. Конкретные примеры вместо общих фраз\nДай оценку по шкале 0-10, где:\n- 0-3: Никакого улучшения или даже ухудшение\n- 4-6: Небольшие улучшения, но многое не учтено\n- 7-10: Значительные улучшения, кандидат явно учился на фидбеке\nТакже укажи:\n- Какие конкретно аспекты улучшились\n- Что ещё можно улучшить\nФормат ответа (строго в JSON):\n{{\n    \"score\": число от 0 до 10,\n    \"improved_areas\": [\"улучшение 1\", \"улучшение 2\", ...],\n    \"still_needs_improvement\": [\"что ещё улучшить 1\", ...],\n    \"feedback\": \"краткий фидбек 1 предложение\"\n}}",
+      "system": "Ты эксперт-интервьюер. Оценивай объективно способность кандидата к обучению. \nВозвращай ответ строго в формате JSON. Не будь слишком строгим, но честно оценивай прогресс."
+    },
+    "clarification": {
+      "analysis": "Текущий контекст интервью: {current_context}\nСообщение кандидата: {message}\nПроанализируй, является ли сообщение уточняющим вопросом. Уточняющий вопрос:\n- Задается ДО решения задачи или ответа на вопрос\n- Направлен на уточнение требований, условий, ограничений\n- Показывает, что кандидат хочет сначала понять задачу, а потом действовать\n- Может касаться: формата входных/выходных данных, граничных случаев, ограничений по времени/памяти, примеров\nДай ответ в формате JSON:\n{{\n    \"is_clarification\": true/false,\n    \"confidence\": число от 0.0 до 1.0 (уверенность),\n    \"reason\": \"краткое объяснение почему это уточняющий вопрос или нет\",\n    \"suggested_response\": \"как агенту лучше ответить на этот вопрос\" (только если is_clarification=true)\n}}",
+      "system": "Ты эксперт-интервьюер по техническим вопросам. Твоя задача - объективно определить, является ли сообщение кандидата уточняющим вопросом.\nВозвращай ответ строго в формате JSON. Будь точным и аналитичным."
+    },
+    "context_switching": {
+      "analysis": "Контекст интервью: {current_context}\nУровень кандидата: {level}\nПоследние сообщения диалога:\n{history_text}\nНовое сообщение кандидата: {current_message}\nПроанализируй сообщение кандидата на предмет:\n1. Логичность - соответствует ли ответ заданному вопросу/теме?\n2. Релевантность - отвечает ли кандидат по существу или уходит от темы?\n3. Попытка смены темы - пытается ли кандидат перевести разговор на другую тему без причины?\n4. Конструктивность - есть ли в ответе попытка решить задачу/ответить на вопрос?\nВАЖНО: \n- Уточняющие вопросы по задаче - это НЕ нарушение\n- Просьба разъяснить условие - это НЕ нарушение\n- Признание незнания с попыткой рассуждать - это НЕ нарушение\n- Нарушением считается явная попытка избежать ответа через смену темы\nФормат ответа (строго JSON):\n{{\n    \"is_violation\": true/false,\n    \"severity\": \"none\" | \"minor\" | \"moderate\" | \"severe\",\n    \"reason\": \"объяснение почему это нарушение или не нарушение\",\n    \"specific_issue\": \"конкретная проблема если есть\"\n}}",
+      "system": "Ты эксперт по проведению технических интервью. Твоя задача - объективно оценить,\nпытается ли кандидат уйти от ответа или дает нелогичный ответ.\nБудь справедлив - не штрафуй за нормальное поведение на интервью.\nВозвращай ответ строго в формате JSON."
+    },
+    "conflict_behavior": {
+      "analysis": "Контекст диалога на техническом интервью:\n{history_text}\nНовое сообщение кандидата: {message}\nПроанализируй сообщение на предмет ДЕСТРУКТИВНОГО поведения. Ищи признаки:\n1. АГРЕССИЯ/ГРУБОСТЬ:\n   - Оскорбления, мат, унижения\n   - Агрессивный тон, угрозы\n   - Сарказм с целью унизить\n2. МАНИПУЛЯЦИИ:\n   - Газлайтинг (\"вы сами не понимаете\")\n   - Обвинение интервьюера в некомпетентности без оснований\n   - Попытки давления или шантажа\n3. НЕЭТИЧНОЕ ПОВЕДЕНИЕ:\n   - Ложь о своих навыках/опыте\n   - Дискриминационные высказывания\n   - Нарушение конфиденциальности\n4. ПАССИВНАЯ АГРЕССИЯ:\n   - Саботаж интервью\n   - Намеренное непонимание\n   - Скрытые оскорбления\nВАЖНО: \n- Нормальное несогласие с интервьюером - это НЕ нарушение\n- Защита своей позиции с аргументами - это НЕ нарушение\n- Выражение фрустрации без оскорблений - это НЕ нарушение\n- Признание ошибки или незнания - это НЕ нарушение\nФормат ответа (строго JSON):\n{{\n    \"is_violation\": true/false,\n    \"severity\": \"none\" | \"minor\" | \"moderate\" | \"severe\" | \"critical\",\n    \"behavior_type\": \"none\" | \"aggression\" | \"manipulation\" | \"unethical\" | \"passive_aggression\",\n    \"reason\": \"объяснение почему это нарушение или нет\",\n    \"specific_quote\": \"конкретная фраза-нарушение если есть\"\n}}",
+      "system": "Ты эксперт по HR и деловому этикету. Твоя задача - выявить деструктивное поведение кандидата.\nБудь объективен - не путай нормальную защиту своей позиции с агрессией.\nШтрафуй только за реальные нарушения этики и морали.\nВозвращай ответ строго в формате JSON."
+    },
+    "code_readability": {
+      "system": "Проверка качества кода по стандартам PEP8 и читаемости"
+    },
+    "agent_switch": {
+      "intro": "Представься кратко и продолжи интервью уровня {level}. НЕ называй кандидата по имени.",
+      "system": "Ты {agent_name}, {agent_title}. Одно предложение. НЕ НАЗЫВАЙ КАНДИДАТА ПО ИМЕНИ."
+    },
+    "agent_meeting": {
+      "context": "Результаты интервью кандидата уровня {level}:\n- Решено задач: {coding_completed} из {coding_total}\n- Средний балл за код: {coding_avg}%\n- Средний балл за теорию: {theory_avg}%\n- Штрафов: {penalties_count} (всего -{total_penalties:.1f} баллов)\n{bonus_details}\n{penalty_details}\n{learning_agility_details}\n{code_readability_details}\n- Итоговый балл: {final_score:.0f}/100\nЗаметки интервьюеров:\n{agent_notes}",
+      "prompt": "{context}\n\nКак {agent_title}, дай краткую оценку кандидату (2-3 предложения) и свою рекомендацию:\n- STRONG_HIRE: отличный кандидат\n- HIRE: хороший кандидат\n- MAYBE: нужно дополнительное собеседование\n- NO_HIRE: не рекомендую\n\nФокусируйся на: {focus_areas}\n\nФормат ответа:\nОЦЕНКА: [твоя краткая оценка]\nРЕШЕНИЕ: [STRONG_HIRE/HIRE/MAYBE/NO_HIRE]",
+      "system": "Ты {agent_name}, {agent_title}. Отвечай кратко и по делу. Не рассуждай вслух."
+    }
+  },
+  "metrics_info": {
+    "adr": {
+      "name": "Answer Depth Rating",
+      "description": "Оценка глубины ответа через LLM анализ",
+      "scale": "0.0 - 1.0"
+    },
+    "learning_agility": {
+      "name": "Learning Agility",
+      "description": "Способность учиться на фидбеке",
+      "scale": "0.0 - 1.0",
+      "bonus": "до +20% к оценке при score > 0.5"
+    },
+    "clarification": {
+      "name": "Proactive Clarification",
+      "description": "Бонус за уточняющие вопросы",
+      "bonus": "+3 за первый вопрос, +1 за последующие"
+    },
+    "context_switching": {
+      "name": "Context Switching Penalty",
+      "description": "Штраф за смену темы и нелогичные ответы",
+      "severity_levels": ["none", "minor", "moderate", "severe"],
+      "penalty_by_level": "junior: x0.2-1.0, middle: x0.5-2.0, senior: x1.0-3.0"
+    },
+    "code_readability": {
+      "name": "Code Readability Penalty",
+      "description": "Штраф за нарушение PEP8",
+      "checks": ["line_length", "trailing_whitespace", "tabs", "naming", "docstrings"],
+      "penalty_by_level": "junior: x0.2-1.0, middle: x0.5-2.0, senior: x1.0-3.0"
+    },
+    "conflict_behavior": {
+      "name": "Conflict Behavior Penalty",
+      "description": "Штраф за деструктивное поведение (веса снижены на 25%)",
+      "types": ["aggression", "manipulation", "unethical", "passive_aggression"],
+      "severity_levels": ["none", "minor", "moderate", "severe", "critical"],
+      "note": "critical = автоматический NO_HIRE"
+    },
+    "anticheat": {
+      "name": "Anti-Cheat System",
+      "description": "Система защиты от списывания",
+      "checks": ["paste_detection", "typing_speed", "browser_extensions"],
+      "penalties": "paste: 10-18, fast_typing: 8-15"
+    }
+  }
+}
